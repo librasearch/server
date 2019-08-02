@@ -12,13 +12,6 @@ const dbNAME = 'libra-local';
 
 // Latest transactions
 app.get('/latest', (req, res) => {
-	// Access 'limit' query parameter
-	if (req.query.limit != undefined) {
-		const limit = req.query.limit;
-	} else {
-		const limit = 100;
-	}
-
 	// Mongo retrieval and output
 	MongoClient.connect(dbURL, { useNewUrlParser : true }, function(error, mng) {
 		if (error) {
@@ -26,7 +19,7 @@ app.get('/latest', (req, res) => {
 		} else {
 			mng.db(dbNAME).collection("transactions").find({}).sort({
 				_id: -1 // Reverse order retrieval
-			}).limit(limit).toArray(function (error, result) {
+			}).limit(15/*use req.query.limit*/).toArray(function (error, result) {
 				if (error) {
 					throw error;
 				} else {
@@ -38,5 +31,21 @@ app.get('/latest', (req, res) => {
 		}
 	});
 });
+
+app.get('/statistics', (req, res) => {
+	res.send('stats');
+});
+
+/*
+Transactional query
+app.get('/transaction/{}', (req, res) => {
+	res.send('stats');
+});
+
+Address query
+app.get('/address/{}', (req, res) => {
+	res.send('stats');
+});
+*/
 
 app.listen(port);
