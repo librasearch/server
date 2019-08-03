@@ -24,6 +24,8 @@ app.get('/latest', (req, res) => {
 					throw error;
 				} else {
 					cleanedResult = JSON.stringify(result);
+					res.setHeader("Access-Control-Allow-Origin", "*");
+					res.setHeader('Content-Type', 'application/json');
 					res.end(cleanedResult);
 				}
 				mng.close();
@@ -36,6 +38,23 @@ app.get('/statistics', (req, res) => {
 	res.send('stats');
 });
 
+app.post('/query/:value', (req, res) => {
+
+	// Get value of query.
+	const queryValue = req.params;
+
+	if (queryValue == 64) {
+
+		// If the queryValue == 64, this is an address query.
+
+	} else if (queryValue < 32) {
+
+		// If the queryValue is under 32, this is a version query.
+
+	} else {
+		res.send('Your query has an error. Please try again.');
+	}
+});
 /*
 Transactional query
 app.get('/transaction/{}', (req, res) => {
