@@ -42,14 +42,15 @@ app.post('/query/:value', (req, res) => {
 
 	// Get value of query.
 	const queryValue = req.params;
+	res.send(queryValue);
 
-	if (queryValue == 64) {
+	if (queryValue.length == 64) {
 
-		// If the queryValue == 64, this is an address query.
+		res.send('address');
 
-	} else if (queryValue < 32) {
+	} else if (queryValue.length < 32) {
 
-		// If the queryValue is under 32, this is a version query.
+		res.send('version number');
 
 	} else {
 		res.send('Your query has an error. Please try again.');
