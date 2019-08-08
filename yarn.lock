@@ -2199,3 +2199,8 @@ yallist@^3.0.0, yallist@^3.0.3:
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/yallist/-/yallist-3.0.3.tgz#b4b049e314be545e3ce802236d6cd22cd91c3de9"
   integrity sha512-S+Zk8DEWE6oKpV+vI3qWkaK+jSbIK86pCwe2IF/xwIpQ8jEuxpw9NyaGjmp9+BoJv5FV2piqCDcoCtStppiq2A==
+
+zipson@^0.2.11:
+  version "0.2.11"
+  resolved "https://registry.yarnpkg.com/zipson/-/zipson-0.2.11.tgz#06444382ca58b25b320dd6a1b1e97dbf7df31eba"
+  integrity sha512-Z0H6F1Bi07kA2yNMmWr1i0Rs9jL35mTmgPq8oW5dSxH3wLNjGruOWSAWY1XgzcDzFO0OypkVIwoWcbqPB7vbFA==
