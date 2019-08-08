@@ -1,8 +1,6 @@
 // Necessary imports
 const express = require('express');
 const MongoClient = require('mongodb').MongoClient;
-const ObjectID = require('mongodb').objectID;
-const moment = require('moment');
 
 // Express Initialization
 const app = express();
@@ -119,6 +117,46 @@ app.post('/query/:value', (req, res) => {
 		res.send('Your query has an error. Please try again.');
 	}
 });*/
+
+app.post('/query/', (req, res) => {
+
+	let queryValue = '';
+	req.on('data', chunk => {
+		queryValue += chunk.toString();
+	});
+
+	req.on('end', () => {
+		res.setHeader("Access-Control-Allow-Origin", "*");
+		res.setHeader('Content-Type', 'application/json');
+		
+		if (queryValue.length == 64) {
+
+			res.send('address');
+
+		} else if (queryValue.length < 32) {
+
+			MongoClient.connect(dbURL, { useNewUrlParser : true }, function (error, mng) {
+				if (error) {
+					throw error;
+				} else {
+					mng.db(dbNAME).collection("transactions").findOne({
+						_id: Number(queryValue)
+					}, function (error, result) {
+						if (error) {
+							throw error;
+						} else {
+							mng.close();
+							result = JSON.stringify(result);
+							res.end(result);
+						}
+					});
+				}
+			});
+		} else {
+			res.send('Your query has an error. Please try again.');
+		}
+	});
+});
 /*
 Transactional query
 app.get('/transaction/{}', (req, res) => {
