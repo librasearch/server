@@ -1,10 +1,11 @@
 // Necessary imports
 const express = require('express');
 const MongoClient = require('mongodb').MongoClient;
+const moment = require('moment');
 
 // Express Initialization
 const app = express();
-const port = 3000;
+const port = 3010;
 
 // Static declarations
 const dbURL = 'mongodb://localhost:27017/';
@@ -98,25 +99,41 @@ app.get('/statistics', (req, res) => {
 		}
 	});
 });
+*/
+app.get('/statistics/:query', (req, res) => {
 
-app.post('/query/:value', (req, res) => {
+	let queryValue = req.params.query.toString();
+	let currentTime = moment().unix();
+	let time24prev = moment().unix() - 86400;
 
-	// Get value of query.
-	const queryValue = req.params;
-	res.send(queryValue);
+	res.setHeader("Access-Control-Allow-Origin", "*");
+	res.setHeader('Content-Type', 'application/json');
 
-	if (queryValue.length == 64) {
-
-		res.send('address');
-
-	} else if (queryValue.length < 32) {
-
-		res.send('version number');
-
+	MongoClient.connect(dbURL, { useNewUrlParser : true }, function (error, mng) {
+		if (error) {
+			throw error;
+		} else {
+			mng.db(dbNAME).collection("addresses").find({
+				
+			}, function (error, result) {
+				if (error) {
+					throw error;
+				} else {
+					mng.close();
+					console.log(currentTime);
+					result = JSON.stringify(result);
+					res.end(result);
+				}
+			});
+		}
+	});
+	
+	/*if (queryValue === "uniqueAddresses") {
+		res.end('woo!');
 	} else {
-		res.send('Your query has an error. Please try again.');
-	}
-});*/
+		res.end('Your query has an error. Please try again.');
+	}*/
+});
 
 app.post('/query/', (req, res) => {
 
@@ -157,16 +174,5 @@ app.post('/query/', (req, res) => {
 		}
 	});
 });
-/*
-Transactional query
-app.get('/transaction/{}', (req, res) => {
-	res.send('stats');
-});
-
-Address query
-app.get('/address/{}', (req, res) => {
-	res.send('stats');
-});
-*/
 
 app.listen(port);
