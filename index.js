@@ -5,7 +5,7 @@ const moment = require('moment');
 
 // Express Initialization
 const app = express();
-const port = 3010;
+const port = 3000;
 
 // Static declarations
 const dbURL = 'mongodb://localhost:27017/';
@@ -61,45 +61,6 @@ app.get('/all', (req, res) => {
 	});
 });
 
-/*
-app.get('/statistics', (req, res) => {
-	// Mongo retrival initiation
-	MongoClient.connect(dbURL, { useNewUrlParser : true }, function(error, mng, ObjectID) {
-		if (error) {
-			throw error;
-		} else {
-			const requestTime = moment().unix(); // Time of query
-			const requestTime24 = moment().unix() - 86400; // Time 24hrs before query
-			const requestTime48 = moment().unix() - 172800; // Time 48hrs before query
-
-			// Sent Transactions (24H)
-			mng.db(dbNAME).collection("transactions").find({
-				"timestamp": {
-					$lt: new Date(), 
-					$gte: new Date(new Date().setDate(new Date().getDate()-1))
-				}
-			}).toArray(function (error, result) {
-				if (error) {
-					throw error;
-				} else {
-					count24 = result.length;
-					console.log(count24);
-				}
-				mng.close();
-			});
-
-			// Latest version
-			// Libra Volume (24H)
-			// Average TX Fee (24H)
-			// P2P / Mint Transactions
-			// Average TPS
-			// Unique Addresses
-			// Total Transactions
-			// Total Libra Supply
-		}
-	});
-});
-*/
 app.get('/statistics/:query', (req, res) => {
 
 	let queryValue = req.params.query.toString();
@@ -147,9 +108,96 @@ app.post('/query/', (req, res) => {
 		res.setHeader('Content-Type', 'application/json');
 		
 		if (queryValue.length == 64) {
+			console.log('addr query');
+			if (queryValue == '0000000000000000000000000000000000000000000000000000000000000000') {
+				res.end(JSON.stringify({
+					balance: 'Minting account',
+					txs: []
+				}));
+				return;
+			}
 
-			res.send('address');
+			MongoClient.connect(dbURL, { useNewUrlParser: true}, function (error, mng) {
+				if (error) {
+					throw error;
+				} else {
+					mng.db(dbNAME).collection("addresses").findOne({
+						_id: queryValue
+					}, function (error, result) {
+						if (error) {
+							throw error;
+						} else {
+							let balance = 0;
+							let txs = [];
+							let itemsProcessed = 0;
 
+							if (typeof (result.received) != 'undefined') {
+								result.received.forEach(tx => {
+									mng.db(dbNAME).collection("transactions").findOne({
+										_id: Number(tx)
+									}, function (error, resultTwo) {
+										if (error) {
+											throw error;
+										} else {
+											balance += resultTwo.value;
+											txs.push(resultTwo);
+											itemsProcessed++;
+											if (itemsProcessed == result.received.length) {
+												processRequest();
+											}
+										}
+									});
+								});
+							} else {
+								processRequest();
+							}
+
+							/* TODO: Rewrite copied function to optimize */
+							function processRequest() {
+								let itemsProcessed = 0;
+								if (typeof (result.sent) != 'undefined') {
+									result.sent.forEach(tx => {
+										mng.db(dbNAME).collection("transactions").findOne({
+											_id: Number(tx)
+										}, function (err, result2) {
+											if (err) throw err;
+											balance -= result2.value;
+											txs.push(result2);
+											itemsProcessed++;
+											if (itemsProcessed == result.sent.length) {
+												prepareData();
+											}
+										});
+									});
+								} else {
+									prepareData();
+								}
+							}
+
+							function prepareData() {
+								// console.log(balance, txs)
+								txs.sort(function (a, b) {
+									var aNum = parseInt(a._id);
+									var bNum = parseInt(b._id);
+									return bNum - aNum;
+								});
+								console.log(txs);
+								returnData();
+							}
+
+							function returnData() {
+								mng.close();
+								res.setHeader("Access-Control-Allow-Origin", "*");
+								res.end(JSON.stringify({
+									balance: balance,
+									txs: txs
+								}));
+							}
+						}
+					});
+				}
+			});
+			
 		} else if (queryValue.length < 32) {
 
 			MongoClient.connect(dbURL, { useNewUrlParser : true }, function (error, mng) {
@@ -174,5 +222,44 @@ app.post('/query/', (req, res) => {
 		}
 	});
 });
+/*
+app.get('/statistics', (req, res) => {
+	// Mongo retrival initiation
+	MongoClient.connect(dbURL, { useNewUrlParser : true }, function(error, mng, ObjectID) {
+		if (error) {
+			throw error;
+		} else {
+			const requestTime = moment().unix(); // Time of query
+			const requestTime24 = moment().unix() - 86400; // Time 24hrs before query
+			const requestTime48 = moment().unix() - 172800; // Time 48hrs before query
+
+			// Sent Transactions (24H)
+			mng.db(dbNAME).collection("transactions").find({
+				"timestamp": {
+					$lt: new Date(), 
+					$gte: new Date(new Date().setDate(new Date().getDate()-1))
+				}
+			}).toArray(function (error, result) {
+				if (error) {
+					throw error;
+				} else {
+					count24 = result.length;
+					console.log(count24);
+				}
+				mng.close();
+			});
+
+			// Latest version
+			// Libra Volume (24H)
+			// Average TX Fee (24H)
+			// P2P / Mint Transactions
+			// Average TPS
+			// Unique Addresses
+			// Total Transactions
+			// Total Libra Supply
+		}
+	});
+});
+*/
 
 app.listen(port);
