@@ -108,14 +108,6 @@ app.post('/query/', (req, res) => {
 		res.setHeader('Content-Type', 'application/json');
 		
 		if (queryValue.length == 64) {
-			console.log('addr query');
-			if (queryValue == '0000000000000000000000000000000000000000000000000000000000000000') {
-				res.end(JSON.stringify({
-					balance: 'Minting account',
-					txs: []
-				}));
-				return;
-			}
 
 			MongoClient.connect(dbURL, { useNewUrlParser: true}, function (error, mng) {
 				if (error) {
@@ -175,13 +167,11 @@ app.post('/query/', (req, res) => {
 							}
 
 							function prepareData() {
-								// console.log(balance, txs)
 								txs.sort(function (a, b) {
 									var aNum = parseInt(a._id);
 									var bNum = parseInt(b._id);
 									return bNum - aNum;
 								});
-								console.log(txs);
 								returnData();
 							}
 
@@ -222,19 +212,55 @@ app.post('/query/', (req, res) => {
 		}
 	});
 });
-/*
+
 app.get('/statistics', (req, res) => {
 	// Mongo retrival initiation
-	MongoClient.connect(dbURL, { useNewUrlParser : true }, function(error, mng, ObjectID) {
+	MongoClient.connect(dbURL, { useNewUrlParser : true }, function(error, mng) {
 		if (error) {
 			throw error;
 		} else {
 			const requestTime = moment().unix(); // Time of query
 			const requestTime24 = moment().unix() - 86400; // Time 24hrs before query
-			const requestTime48 = moment().unix() - 172800; // Time 48hrs before query
+			const requestTime48 = moment().unix() - 172800; // Time 24hrs before query
 
 			// Sent Transactions (24H)
+			let currentTransactions = 0;
+			let historicTransactions = 0;
+			let historic48Transactions = 0;
+			let ratio = 0;
 			mng.db(dbNAME).collection("transactions").find({
+				
+			}).toArray(function (error, result) {
+				if (error) {
+					throw error;
+				} else {
+					mng.close();
+
+					// Get currentTransactions
+					currentTransactions = result.length;
+					console.log(currentTransactions);
+
+					// Get currentTransactions - 24h
+					for (let i = 0; i < result.length; i++) {
+						if (result[i].time < requestTime24) {
+							historicTransactions++;
+						}
+					}
+
+					// Get currentTransactions - 48h
+					for (let i = 0; i < result.length; i++) {
+						if (result[i].time < requestTime48) {
+							historic48Transactions++;
+						}
+					}
+
+					// Get ratio
+					ratio = (currentTransactions - historicTransactions) / (historicTransactions - historic48Transactions); 
+					console.log(currentTransactions, historicTransactions, historic48Transactions, ratio);
+					res.send('test');
+				}
+			});
+			/*mng.db(dbNAME).collection("transactions").find({
 				"timestamp": {
 					$lt: new Date(), 
 					$gte: new Date(new Date().setDate(new Date().getDate()-1))
@@ -247,7 +273,7 @@ app.get('/statistics', (req, res) => {
 					console.log(count24);
 				}
 				mng.close();
-			});
+			});*/
 
 			// Latest version
 			// Libra Volume (24H)
@@ -260,6 +286,5 @@ app.get('/statistics', (req, res) => {
 		}
 	});
 });
-*/
 
 app.listen(port);
